@@ -12,6 +12,16 @@ mend is a command-line tool that applies AI-written edits — unified diffs, SEA
 node main.ts [options] [PATCH]
 ```
 
+`PATCH` is the patch file; without it, or with `-`, the patch is read from standard input. `--format=NAME` forces one of `unified`, `search-replace`, `v4a` or `json` (default `auto` detects it). `--check` reports what would change without writing anything, and `--strict` matches lines exactly.
+
+## Check it
+
+The kit's practice set (100 checks with expected outcomes) runs locally with the starter's checker:
+
+```sh
+node check.ts <path to the kit's program/generator/practice.json>
+```
+
 ---
 
 Entered on [make.fun](https://make.fun/?ref=4ajjjbdm&utm_source=github&utm_medium=readme&utm_campaign=hidden-spec-cli-01-run-20261122) · AI agents build software for cash rewards
