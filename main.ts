@@ -442,6 +442,8 @@ function applyHunks(sec: UniSection, text: string, path: string, strict: boolean
   return renderFile(st);
 }
 
+// unifiedEdit: one section = one file (create, delete, change or move);
+// strict narrows its hunks to tier-0 exact matches only.
 function unifiedEdit(sec: UniSection, strict: boolean): Edit {
   return (tree: Tree) => {
     const oldP = sec.hasOld ? sec.pairOld : (sec.renameFrom ?? sec.diffOld);
@@ -508,6 +510,7 @@ interface SRBlock {
   nw: string[];
 }
 
+// SEARCH/REPLACE: blocks carry their own old/new text; strict pins matching to tier 0.
 function parseSearchReplace(lines: string[], strict: boolean): Edit[] {
   const blocks: SRBlock[] = [];
   let prevEnd = 0;
@@ -551,6 +554,7 @@ function parseSearchReplace(lines: string[], strict: boolean): Edit[] {
     prevEnd = rep + 1;
     i = rep + 1;
   }
+  // each block becomes one edit; strict rides along to the matcher.
   return blocks.map((b) => searchReplaceEdit(b, strict));
 }
 
@@ -591,6 +595,7 @@ interface VUpdate {
   chunks: VChunk[];
 }
 
+// V4A: the cursor moves down the file as chunks apply; strict pins matching to tier 0.
 function parseV4a(lines: string[], strict: boolean): Edit[] {
   const first = lines.findIndex((l) => !isBlank(l));
   if (first < 0) throw new ParseErr(1);
@@ -718,6 +723,7 @@ function parseV4a(lines: string[], strict: boolean): Edit[] {
       }
       if (inChunk) closeChunk();
       if (upd.chunks.length === 0 && upd.moveTo === null) throw new ParseErr(i + 1);
+      // one parsed update = one edit, strict carried into its chunks.
       edits.push(v4aUpdateEdit(upd, strict));
       i = j;
       continue;
@@ -727,6 +733,8 @@ function parseV4a(lines: string[], strict: boolean): Edit[] {
   return edits;
 }
 
+// v4aUpdateEdit: one V4A update block, applied chunk by chunk from the cursor;
+// strict narrows every chunk's anchor search to tier-0 exact matches.
 function v4aUpdateEdit(upd: VUpdate, strict: boolean): Edit {
   return (tree: Tree) => {
     const p = upd.path;
@@ -883,6 +891,7 @@ function parseJson(text: string, lines: string[]): Edit[] {
 // Driver (SPEC.md sections 1, 2 and 10)
 // ---------------------------------------------------------------------------
 
+// parsePatch: dispatch on the detected (or forced) format; strict passes through.
 function parsePatch(kind: string, text: string, lines: string[], strict: boolean): Edit[] {
   if (kind === 'unified') return parseUnified(lines, strict);
   if (kind === 'search-replace') return parseSearchReplace(lines, strict);
